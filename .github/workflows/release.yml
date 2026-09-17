@@ -1,12 +1,15 @@
 # Publishes via changesets, which is what the root `release` script uses and what
-# .changeset/config.json is set up for. The previous workflow ran `npm publish` on
-# a single hardcoded package directory instead, so the other packages never shipped.
+# .changeset/config.json is set up for.
+#
+# Started by hand, never by a push: publishing to npm can't be taken back, so it is a
+# decision, not a side effect of merging. Run it from the Actions tab, or with
+# `gh workflow run release.yml`. It needs an NPM_TOKEN secret whose token is allowed to
+# publish without a one-time password (a granular token with 2FA bypass).
 
 name: Release
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 

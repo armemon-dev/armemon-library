@@ -54,9 +54,34 @@ describe('--json output', () => {
     const cwd = await fs.mkdtemp(path.join(os.tmpdir(), 'armemon-json-'));
     try {
       const result = cli(['init', 'react-native', 'MyApp', '--dry-run', '--plugins', ''], cwd);
-      expect(JSON.parse(result.stdout)).toMatchObject({ schemaVersion: 1, ok: true, dryRun: true });
+      expect(JSON.parse(result.stdout), result.stdout).toMatchObject({ schemaVersion: 1, ok: true, dryRun: true });
     } finally {
       await fs.rm(cwd, { recursive: true, force: true });
+    }
+  });
+
+  // The package manager armemon suggests by default is pnpm, and plenty of machines —
+  // GitHub's runners among them — don't have it. A dry run installs nothing, so it has
+  // no business failing there; it did, and CI was the one place that noticed.
+  it('init --dry-run works without the package manager installed', async () => {
+    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), 'armemon-json-'));
+    const bin = await fs.mkdtemp(path.join(os.tmpdir(), 'armemon-path-'));
+    try {
+      // Everything armemon needs, and nothing else: no pnpm on this PATH.
+      for (const command of ['node', 'npm', 'npx', 'git', 'which', 'sh', 'env']) {
+        const found = spawnSync('which', [command], { encoding: 'utf8' }).stdout.trim();
+        if (found) await fs.symlink(found, path.join(bin, command));
+      }
+      const result = spawnSync(process.execPath, [BIN, 'init', 'react-native', 'MyApp', '--dry-run', '--plugins', '', '--json'], {
+        cwd,
+        encoding: 'utf8',
+        env: { ...process.env, PATH: bin, CI: 'true', FORCE_COLOR: '0' },
+      });
+      expect(spawnSync('which', ['pnpm'], { encoding: 'utf8', env: { ...process.env, PATH: bin } }).status).not.toBe(0);
+      expect(JSON.parse(result.stdout), result.stdout).toMatchObject({ schemaVersion: 1, ok: true, dryRun: true });
+    } finally {
+      await fs.rm(cwd, { recursive: true, force: true });
+      await fs.rm(bin, { recursive: true, force: true });
     }
   });
 

@@ -650,11 +650,15 @@ export async function runInitReactNativeFlow(options: InitReactNativeOptions): P
   const rnVersion = await resolveRnVersion(options.version);
   const packageManager = await resolvePackageManager(options.packageManager);
   // Straight after choosing it, not a question later: a missing package manager is
-  // knowable now, and every answer given after this point would be wasted.
-  await assertCommandAvailable(
-    packageManager,
-    `Install ${packageManager}, or re-run with --pm npm.`,
-  );
+  // knowable now, and every answer given after this point would be wasted. A dry run
+  // is the exception — it installs nothing, so it has no reason to need the tool, and
+  // refusing to describe a plan on a machine without pnpm helps nobody.
+  if (!options.dryRun) {
+    await assertCommandAvailable(
+      packageManager,
+      `Install ${packageManager}, or re-run with --pm npm.`,
+    );
+  }
   const language = await resolveLanguage(options.language);
   const platforms = await resolvePlatforms(options.platforms);
 
