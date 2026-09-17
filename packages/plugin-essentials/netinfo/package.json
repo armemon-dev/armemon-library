@@ -1,0 +1,9 @@
+{
+  "//": "Resolution shim, not a package. Metro in React Native 0.76 does not honour package.json \"exports\" by default (unstable_enablePackageExports is opt-in until ~0.79), so `@armemon-library/essentials/netinfo` fails to resolve in an app bundle even though Node, Vite, Jest and TypeScript all resolve it fine from the exports map. This directory is the pre-exports way to expose a subpath: Metro resolves the folder and reads main/module here, while everything else keeps using exports. Confirmed by running a real `react-native bundle`.",
+  "name": "@armemon-library/essentials-netinfo",
+  "private": true,
+  "main": "../dist/runtime/network/netInfoAdapter.js",
+  "module": "../dist/runtime/network/netInfoAdapter.mjs",
+  "react-native": "../dist/runtime/network/netInfoAdapter.js",
+  "types": "../dist/runtime/network/netInfoAdapter.d.ts"
+}

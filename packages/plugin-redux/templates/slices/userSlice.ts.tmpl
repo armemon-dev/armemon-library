@@ -1,0 +1,48 @@
+/**
+ * FILE: userSlice.ts
+ * PATH: {{sliceFilePath}}
+ *
+ * WHAT: Simple profile-object slice — setUser/clearUser/updateUser reducers over a
+ *       flat {id, name, email, avatarUrl} shape.
+ * WHY:  Scaffolded by the armemon Redux plugin wizard as a starting example; safe to
+ *       delete once you have a real user/profile slice.
+ * HOW:  Plain synchronous reducers via Immer.
+ * WHEN: Loaded by {{storeConfigPath}}.
+ *
+ * EXPORTS: userSlice
+ * DEPENDS ON: nothing
+ * USED BY: {{storeConfigPath}}
+ */
+
+export interface UserState {
+  id: string | null;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+}
+
+const initialState: UserState = {
+  id: null,
+  name: '',
+  email: '',
+  avatarUrl: null,
+};
+
+export const userSlice = {
+  name: 'user',
+  initialState,
+  reducers: {
+    setUser: (state: UserState, action: { payload: UserState }) => {
+      Object.assign(state, action.payload);
+    },
+    updateUser: (state: UserState, action: { payload: Partial<UserState> }) => {
+      Object.assign(state, action.payload);
+    },
+    clearUser: (state: UserState) => {
+      state.id = null;
+      state.name = '';
+      state.email = '';
+      state.avatarUrl = null;
+    },
+  },
+};

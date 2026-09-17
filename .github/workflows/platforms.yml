@@ -1,0 +1,89 @@
+# The two host-specific paths CI's Linux jobs can never reach.
+#
+# `pod install` only runs on macOS, and react-native-windows' attach only on Windows
+# (its CLI plugin needs pwsh.exe and dotnet.exe just to load). Both have their own
+# branches in the init flow — choosing between `bundle exec pod` and `pod`, taking a
+# package back out when an attach fails — and until this workflow neither had ever run
+# anywhere but a developer's machine.
+#
+# Weekly and on demand rather than on every push: these runners are slow, and a
+# failure here usually means an upstream release moved (a new CocoaPods, a
+# react-native-windows that trails React Native), which is worth a look but not worth
+# blocking a pull request over.
+
+name: Native platforms
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  macos:
+    name: iOS and macOS on macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Scaffold with iOS and macOS
+        working-directory: ${{ runner.temp }}
+        run: |
+          node "$GITHUB_WORKSPACE/packages/cli-armemon/dist/bin/armemon.js" \
+            init react-native CiApp \
+            --rn-version 0.76.0 --pm npm --all-accept --plugins "" \
+            --platforms ios,macos --json --no-verify | tee result.json
+
+      - name: CocoaPods ran, and both native projects exist
+        working-directory: ${{ runner.temp }}/CiApp
+        run: |
+          test -d ios/Pods
+          test -f ios/Podfile.lock
+          test -d macos
+          grep -q '"macos"' armemon.config.ts
+
+      - name: Install from the lockfile
+        working-directory: ${{ runner.temp }}/CiApp
+        run: npm ci
+
+  windows:
+    name: Windows on Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Scaffold with Windows
+        working-directory: ${{ runner.temp }}
+        run: |
+          node "$GITHUB_WORKSPACE/packages/cli-armemon/dist/bin/armemon.js" \
+            init react-native CiApp \
+            --rn-version 0.76.0 --pm npm --all-accept --plugins "" \
+            --platforms android,windows --json --no-verify | tee result.json
+
+      - name: The Windows project exists and is recorded
+        working-directory: ${{ runner.temp }}/CiApp
+        run: |
+          test -d windows
+          test ! -f windows/README.md
+          grep -q '"windows"' armemon.config.ts
+          grep -q '"react-native-windows"' package.json
+
+      # If the attach had failed, react-native-windows would have been taken back out
+      # of package.json; this proves the lockfile agrees either way.
+      - name: Install from the lockfile
+        working-directory: ${{ runner.temp }}/CiApp
+        run: npm ci

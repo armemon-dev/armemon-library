@@ -1,0 +1,76 @@
+/**
+ * FILE: authSlice.ts
+ * PATH: {{sliceFilePath}}
+ *
+ * WHAT: Auth slice demonstrating an async login/logout flow with createAsyncThunk —
+ *       status tracking and {{tokenName}} storage.
+ * WHY:  Scaffolded by the armemon Redux plugin wizard as a starting example; safe to
+ *       rewrite once you have a real auth endpoint. Uses the pre-built-slice
+ *       authoring mode (not the plain {name,initialState,reducers} shape) because it
+ *       needs extraReducers to hook into the thunk's pending/fulfilled/rejected
+ *       actions, which the plain shape can't express.
+ * HOW:  loginThunk's fetch call is a placeholder — replace the URL with your real
+ *       auth endpoint.
+ * WHEN: Loaded by {{storeConfigPath}}.
+ *
+ * EXPORTS: authSlice, loginThunk, logout
+ * DEPENDS ON: @armemon-library/redux (re-exports createSlice/createAsyncThunk)
+ * USED BY: {{storeConfigPath}}
+ */
+
+import { createSlice, createAsyncThunk } from '@armemon-library/redux';
+
+export interface AuthState {
+  {{tokenName}}: string | null;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  error: string | null;
+}
+
+const initialState: AuthState = {
+  {{tokenName}}: null,
+  status: 'idle',
+  error: null,
+};
+
+export const loginThunk = createAsyncThunk(
+  'auth/login',
+  async (credentials: { email: string; password: string }) => {
+    // Replace with your real auth endpoint.
+    const response = await fetch('https://example.com/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    const data = (await response.json()) as { {{tokenName}}: string };
+    return data.{{tokenName}};
+  },
+);
+
+const slice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    logout: (state: AuthState) => {
+      state.{{tokenName}} = null;
+      state.status = 'idle';
+    },
+  },
+  extraReducers: (builder: any) => {
+    builder
+      .addCase(loginThunk.pending, (state: AuthState) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(loginThunk.fulfilled, (state: AuthState, action: { payload: string }) => {
+        state.status = 'succeeded';
+        state.{{tokenName}} = action.payload;
+      })
+      .addCase(loginThunk.rejected, (state: AuthState, action: { error: { message?: string } }) => {
+        state.status = 'failed';
+        state.error = action.error.message ?? 'Login failed';
+      });
+  },
+});
+
+export const { logout } = slice.actions;
+export const authSlice = slice;

@@ -1,0 +1,236 @@
+# CI for the armemon monorepo.
+#
+# The previous (and only) workflow built `packages/react-native-ui`, a directory
+# from a layout that no longer exists, and nothing else ran on push at all — no
+# build, no typecheck, no lint, no tests.
+#
+# The `scaffold` job is the important one. Unit tests can't catch "the app this
+# tool produces doesn't compile", which is exactly the class of bug that shipped:
+# broken import paths, a web entry with two type errors, and plugin combinations
+# whose bundles couldn't resolve. So CI scaffolds real apps across a matrix of
+# configurations and type-checks each one.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build, lint, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      # publint and arethetypeswrong against the packed tarballs: the exports map and
+      # the types a consumer's TypeScript really resolves.
+      - run: npm run check:packages
+
+  scaffold:
+    name: Scaffold ${{ matrix.name }} (RN ${{ matrix.rn }})
+    runs-on: ubuntu-latest
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both React Native lines. Pinning only 0.76 hid two real bugs that
+        # React 19 (which "latest" installs) exposes immediately.
+        rn: ['0.76.0', 'latest']
+        # `name` has to be a dimension of its own. With only `rn` here, each include
+        # below was merged into BOTH rn jobs and overwrote the one before it — so CI
+        # ran splash-with-logo twice and none of the other eight configurations.
+        name:
+          - everything
+          - minimal
+          - redux-only
+          - navigation-only
+          - essentials-only
+          - ui-web
+          - cross-platform-scaffold
+          - javascript
+          - splash-with-logo
+        include:
+          - name: everything
+            args: --all-accept --platforms ios,android,web
+          - name: minimal
+            args: --all-accept --plugins "" --platforms android
+          - name: redux-only
+            args: --all-accept --plugins redux --platforms android
+          - name: navigation-only
+            args: --all-accept --plugins navigation --platforms android
+          - name: essentials-only
+            args: --all-accept --plugins essentials --platforms android
+          - name: ui-web
+            args: --all-accept --plugins ui --platforms web
+          # Windows and macOS targets scaffold fine on Linux — only BUILDING them
+          # needs their own OS. Verified by running it; this keeps it that way.
+          - name: cross-platform-scaffold
+            args: --all-accept --plugins "" --platforms android,windows,macos
+          # React Native has no JavaScript template — armemon converts. That
+          # conversion has to be exercised, not assumed.
+          - name: javascript
+            args: --all-accept --language js --platforms android,web
+          # The splash logo spans a file copy, a native generator and web markup,
+          # and was interactive-only until --logo existed — so nothing ever
+          # exercised it. It is the path that broke most often.
+          - name: splash-with-logo
+            args: --all-accept --plugins splash --platforms android,web --logo ./ci-logo.png
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      # A real 256x256 PNG. The image this step wrote before was not a valid PNG, so
+      # react-native-bootsplash's generator failed on it — quietly, since that step only
+      # warns — and CI never exercised the native splash assets at all.
+      - name: Create a logo for the splash matrix entry
+        if: matrix.name == 'splash-with-logo'
+        working-directory: ${{ runner.temp }}
+        run: |
+          node -e "require('fs').writeFileSync('ci-logo.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAADIElEQVR4nO3UIQEAIBDAwI9DRMLSBWIgduL81Gbtc4Gm+R0A/GMAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEGYAEPYAY3AlNqyn/4oAAAAASUVORK5CYII=','base64'))"
+          node -e "const b=require('fs').readFileSync('ci-logo.png'); if (b.readUInt32BE(16) !== 256) process.exit(1)"
+
+      - name: Scaffold
+        working-directory: ${{ runner.temp }}
+        run: |
+          node "$GITHUB_WORKSPACE/packages/cli-armemon/dist/bin/armemon.js" \
+            init react-native CiApp \
+            --rn-version ${{ matrix.rn }} --pm npm --json \
+            ${{ matrix.args }} | tee result.json
+          # --json promises one JSON object on stdout and nothing else. A child
+          # process's output there (React Native's banner, npm's summary) once broke
+          # every script piping this to jq, and nothing noticed.
+          node -e "JSON.parse(require('fs').readFileSync('result.json', 'utf8'))"
+
+      # A clean install from the lockfile the scaffold left, the way a teammate or CI
+      # installs the app. A package taken out of package.json but not the lockfile
+      # (a failed platform attach did exactly that) fails here and nowhere else.
+      - name: Install the generated app from its lockfile
+        working-directory: ${{ runner.temp }}/CiApp
+        run: npm ci
+
+      # The commands people run after init write their own files, outside init's
+      # conversion to JavaScript — and create-slice and create-hook once put raw
+      # TypeScript into .js files. Run them here so the type-check, Metro bundle and
+      # web build below cover what they write too.
+      - name: Run the file-creating commands
+        if: matrix.name == 'everything' || matrix.name == 'javascript'
+        working-directory: ${{ runner.temp }}/CiApp
+        run: |
+          armemon() { node "$GITHUB_WORKSPACE/packages/cli-armemon/dist/bin/armemon.js" "$@"; }
+          armemon create-screen Order --params "id:number,draft?:boolean" --link order/:id --json --no-verify
+          armemon create-slice cart --json --no-verify
+          armemon create-component CartRow --shared --json
+          armemon create-hook useCart --shared --json
+          armemon create-hook useOrderDraft --screen Order --json
+
+      - name: Type-check the generated app
+        if: matrix.name != 'javascript'
+        working-directory: ${{ runner.temp }}/CiApp
+        run: npx tsc --noEmit
+
+      - name: Confirm no TypeScript survived
+        if: matrix.name == 'javascript'
+        working-directory: ${{ runner.temp }}/CiApp
+        run: |
+          leftovers=$(find . \( -name '*.ts' -o -name '*.tsx' -o -name 'tsconfig.json' \) \
+            -not -path './node_modules/*' | tee /dev/stderr | wc -l)
+          test "$leftovers" -eq 0
+
+      # The step that matters most. tsc does not exercise Metro's resolver, and
+      # Metro is where the interesting failures live: it ignores package.json
+      # "exports" by default in RN 0.76, and it resolves every import in a
+      # reachable module whether or not that import ever executes. Both of those
+      # produced real bugs that a type-check ran clean straight through.
+      - name: Bundle the generated app with Metro
+        working-directory: ${{ runner.temp }}/CiApp
+        run: |
+          npx react-native bundle \
+            --platform android --dev false \
+            --entry-file index.js --bundle-output /tmp/ci-bundle.js
+
+      - name: Run the generated app's own tests
+        working-directory: ${{ runner.temp }}/CiApp
+        run: npm test
+
+      # The template's own lint script, the way a user runs it. It failed in every
+      # new app twice without CI noticing: on the web build's bundle and a Jest setup
+      # file, and in JavaScript apps, where the newest TypeScript got installed to
+      # satisfy a peer and crashed the template's ESLint plugins.
+      - name: Lint the generated app
+        working-directory: ${{ runner.temp }}/CiApp
+        run: npm run lint
+
+      - name: Check the generated app's wiring
+        working-directory: ${{ runner.temp }}/CiApp
+        run: node "$GITHUB_WORKSPACE/packages/cli-armemon/dist/bin/armemon.js" doctor .
+
+      # Deliberately the package script, not `npx vite build`: the script is what a
+      # user runs, and it is where a stale path can hide. Running vite directly
+      # bypassed exactly that and let a broken `--config web/vite.config.ts` ship
+      # for JavaScript apps, where the file is vite.config.js.
+      - name: Build the web target the way a user would
+        if: contains(matrix.args, 'web')
+        working-directory: ${{ runner.temp }}/CiApp
+        run: npm run web:build
+
+      - name: Confirm the native splash assets were generated
+        if: matrix.name == 'splash-with-logo'
+        working-directory: ${{ runner.temp }}/CiApp
+        run: find android -name 'bootsplash_logo*.png' | grep -q .
+
+      - name: Confirm the web splash and its logo actually shipped
+        if: matrix.name == 'splash-with-logo'
+        working-directory: ${{ runner.temp }}/CiApp
+        run: |
+          grep -q 'id="armemon-splash"' web/dist/index.html
+          grep -q 'armemon-splash-logo' web/dist/index.html
+          test -f web/dist/ci-logo.png
+
+  # `armemon plugin add` and `plugin remove` against real apps: every built-in plugin
+  # added one at a time and removed in reverse, with the app type-checked, tested,
+  # bundled, linted and built after each step — and, at the end, compared with the app
+  # it started as. The rules it holds the commands to are docs/plugins.md.
+  plugins:
+    name: Plugins added and removed (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ts, js]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Scaffold an app with no plugins
+        working-directory: ${{ runner.temp }}
+        run: |
+          node "$GITHUB_WORKSPACE/packages/cli-armemon/dist/bin/armemon.js" \
+            init react-native PluginApp --rn-version 0.76.0 --pm npm --json \
+            --language ${{ matrix.language }} --plugins "" --platforms ios,android,web > result.json
+          node -e "JSON.parse(require('fs').readFileSync('result.json', 'utf8'))"
+      - name: Add every plugin, then remove every plugin
+        run: scripts/e2e-plugins.sh "${{ runner.temp }}/PluginApp" ${{ matrix.language }}

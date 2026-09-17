@@ -1,0 +1,71 @@
+{
+  "name": "@armemon-library/cli-kit",
+  "version": "0.1.0",
+  "description": "Node-only wizard, prompt, and shell-out primitives shared by the armemon CLI and every plugin's wizard.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test --ext .ts,.tsx",
+    "test": "vitest run --config ../../vitest.config.ts packages/cli-kit/test"
+  },
+  "dependencies": {
+    "@armemon-library/config-types": "^0.1.0",
+    "@clack/prompts": "^0.8.0",
+    "chalk": "^5.3.0",
+    "execa": "^9.0.0",
+    "prettier": "^3.9.6",
+    "semver": "^7.6.0",
+    "typescript": "^5.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/semver": "^7.5.8",
+    "eslint": "^9.39.1",
+    "tsup": "^8.3.0",
+    "vitest": "^2.1.0"
+  },
+  "author": {
+    "name": "Ahmed Raza Memon",
+    "url": "https://github.com/armemon-dev"
+  },
+  "homepage": "https://github.com/armemon-dev/armemon-library#readme",
+  "bugs": {
+    "url": "https://github.com/armemon-dev/armemon-library/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/armemon-dev/armemon-library.git",
+    "directory": "packages/cli-kit"
+  },
+  "keywords": [
+    "react-native",
+    "cli",
+    "wizard",
+    "codegen",
+    "armemon"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

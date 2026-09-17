@@ -1,0 +1,49 @@
+/**
+ * FILE: todosSlice.ts
+ * PATH: {{sliceFilePath}}
+ *
+ * WHAT: CRUD-shaped list slice — add/toggle/remove/clear over an array-of-entities
+ *       shape, the pattern most real "list of things" features follow.
+ * WHY:  Scaffolded by the armemon Redux plugin wizard as a starting example; safe to
+ *       delete once you have real list-backed features.
+ * HOW:  IDs come from {{idGenerator}}. Plain synchronous reducers via Immer.
+ * WHEN: Loaded by {{storeConfigPath}}.
+ *
+ * EXPORTS: todosSlice
+ * DEPENDS ON: {{idGeneratorImport}}
+ * USED BY: {{storeConfigPath}}
+ */
+
+{{idGeneratorImportStatement}}
+
+export interface Todo {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
+export interface TodosState {
+  items: Todo[];
+}
+
+const initialState: TodosState = { items: [] };
+
+export const todosSlice = {
+  name: 'todos',
+  initialState,
+  reducers: {
+    add: (state: TodosState, action: { payload: { title: string } }) => {
+      state.items.push({ id: {{idGeneratorCall}}, title: action.payload.title, done: false });
+    },
+    toggle: (state: TodosState, action: { payload: { id: string } }) => {
+      const todo = state.items.find((item) => item.id === action.payload.id);
+      if (todo) todo.done = !todo.done;
+    },
+    remove: (state: TodosState, action: { payload: { id: string } }) => {
+      state.items = state.items.filter((item) => item.id !== action.payload.id);
+    },
+    clear: (state: TodosState) => {
+      state.items = [];
+    },
+  },
+};

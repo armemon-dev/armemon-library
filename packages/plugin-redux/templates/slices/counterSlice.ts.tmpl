@@ -1,0 +1,86 @@
+/**
+ * FILE: counterSlice.ts
+ * PATH: {{sliceFilePath}}
+ *
+ * WHAT: Baseline counter slice — increment/decrement/reset, demonstrating the
+ *       simplest possible Redux Toolkit slice shape armemon supports.
+ * WHY:  Scaffolded by the armemon Redux plugin wizard as a starting example; safe to
+ *       delete once you have real feature slices.
+ * HOW:  Plain synchronous reducers via Immer (built into createSlice under the hood).
+ * WHEN: Loaded by {{storeConfigPath}}.
+ *
+ * EXPORTS: counterSlice
+ * DEPENDS ON: nothing
+ * USED BY: {{storeConfigPath}}
+ */
+
+export const counterSlice = {
+  name: 'counter',
+  initialState: { value: 0 },
+  reducers: {
+    increment: (state: { value: number }) => {
+      state.value += 1;
+    },
+    decrement: (state: { value: number }) => {
+      state.value -= 1;
+    },
+    reset: (state: { value: number }) => {
+      state.value = 0;
+    },
+
+    // A reducer taking a value arrives as action.payload:
+    //   setTo: (state: { value: number }, action: { payload: number }) => {
+    //     state.value = action.payload;
+    //   },
+    //
+    // dispatch({ type: 'counter/setTo', payload: 10 })
+    //
+    // Mutating `state` is correct here — createSlice runs reducers through Immer
+    // and produces the new immutable state for you. The one rule: mutate OR return
+    // a new object, never both in the same reducer.
+  },
+};
+
+/**
+ * WHAT ELSE A SLICE CAN DO
+ *
+ * This file uses the plain-object form, which armemon passes to createSlice. When
+ * you need anything below, switch to calling createSlice yourself and export the
+ * result — store.config accepts either, and slices/authSlice is an example.
+ *
+ *   import { createSlice, createAsyncThunk } from '@armemon-library/redux';
+ *
+ * ASYNC WORK — a thunk plus the three lifecycle actions it dispatches:
+ *
+ *   export const loadCount = createAsyncThunk('counter/load', async () => {
+ *     const res = await fetch('https://example.com/count');
+ *     return (await res.json()).value as number;
+ *   });
+ *
+ *   export const counterSlice = createSlice({
+ *     name: 'counter',
+ *     initialState: { value: 0, status: 'idle' as 'idle' | 'loading' | 'failed' },
+ *     reducers: { reset: (state) => { state.value = 0; } },
+ *     extraReducers: (builder) => {
+ *       builder
+ *         .addCase(loadCount.pending, (state) => { state.status = 'loading'; })
+ *         .addCase(loadCount.fulfilled, (state, action) => {
+ *           state.status = 'idle';
+ *           state.value = action.payload;
+ *         })
+ *         .addCase(loadCount.rejected, (state) => { state.status = 'failed'; });
+ *     },
+ *   });
+ *
+ * SELECTORS — keep the shape of state in one place, so a rename touches one file:
+ *
+ *   export const selectCount = (state: any) => state.counter.value;
+ *   // in a component: const count = useSelector(selectCount);
+ *
+ * REACTING TO ANOTHER SLICE'S ACTION — extraReducers isn't only for thunks:
+ *
+ *   .addCase('auth/logout', (state) => { state.value = 0; })
+ *
+ * DERIVED VALUES do not belong in state. Compute them in the selector or the
+ * component; storing them means keeping two things in sync forever.
+ */

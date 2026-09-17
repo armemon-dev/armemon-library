@@ -1,0 +1,69 @@
+{
+  "name": "@armemon-library/config-types",
+  "version": "0.1.0",
+  "description": "Shared TypeScript contracts for the armemon CLI, core runtime, and plugin packages.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "echo \"no tests in this package\" && exit 0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "eslint": "^9.39.1",
+    "vitest": "^2.1.0"
+  },
+  "author": {
+    "name": "Ahmed Raza Memon",
+    "url": "https://github.com/armemon-dev"
+  },
+  "homepage": "https://github.com/armemon-dev/armemon-library#readme",
+  "bugs": {
+    "url": "https://github.com/armemon-dev/armemon-library/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/armemon-dev/armemon-library.git",
+    "directory": "packages/config-types"
+  },
+  "keywords": [
+    "react-native",
+    "types",
+    "contracts",
+    "armemon"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

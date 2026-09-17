@@ -1,0 +1,103 @@
+{
+  "name": "@armemon-library/ui",
+  "version": "0.1.0",
+  "description": "Config-driven theme, scaling, and typography kit for armemon-scaffolded apps.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "./dist/runtime/index.js",
+  "types": "./dist/runtime/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/runtime/index.d.mts",
+        "default": "./dist/runtime/index.mjs"
+      },
+      "require": {
+        "types": "./dist/runtime/index.d.ts",
+        "default": "./dist/runtime/index.js"
+      }
+    },
+    "./wizard": {
+      "types": "./dist/wizard/index.d.mts",
+      "import": "./dist/wizard/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "README.md",
+    "LICENSE"
+  ],
+  "armemon": {
+    "manifestVersion": 1,
+    "pluginId": "ui",
+    "displayName": "UI Theming Kit",
+    "description": "Config-driven theme, scaling, and typography — light/dark mode, brand color, starter Text/Button/Container.",
+    "category": "ui",
+    "required": false,
+    "runtimeExportName": "UiPlugin",
+    "configExportName": "configureUiPlugin",
+    "settings": {
+      "file": "ui/theme.config.ts",
+      "exportName": "uiConfig"
+    }
+  },
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsup --config tsup.runtime.config.ts && tsup --config tsup.wizard.config.ts",
+    "dev": "tsup --config tsup.runtime.config.ts --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test --ext .ts,.tsx",
+    "test": "vitest run --config ../../vitest.config.ts packages/plugin-ui/test"
+  },
+  "dependencies": {
+    "@armemon-library/config-types": "^0.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-native": ">=0.70.0",
+    "@armemon-library/cli-kit": ">=0.1.0 <1.0.0"
+  },
+  "devDependencies": {
+    "@armemon-library/cli-kit": "^0.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.0",
+    "eslint": "^9.39.1",
+    "react": "^18.3.0",
+    "react-native": "^0.76.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "sideEffects": false,
+  "author": {
+    "name": "Ahmed Raza Memon",
+    "url": "https://github.com/armemon-dev"
+  },
+  "homepage": "https://github.com/armemon-dev/armemon-library#readme",
+  "bugs": {
+    "url": "https://github.com/armemon-dev/armemon-library/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/armemon-dev/armemon-library.git",
+    "directory": "packages/plugin-ui"
+  },
+  "keywords": [
+    "react-native",
+    "theme",
+    "typography",
+    "armemon-plugin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "peerDependenciesMeta": {
+    "@armemon-library/cli-kit": {
+      "optional": true
+    }
+  }
+}

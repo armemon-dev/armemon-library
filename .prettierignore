@@ -1,0 +1,5 @@
+
+# Generated from the CLI by scripts/generate-user-guide.mjs; a test fails if they
+# stop matching, so the formatter must not rewrite them.
+docs/user-guide.md
+packages/cli-armemon/README.md

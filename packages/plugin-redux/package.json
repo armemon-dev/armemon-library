@@ -1,0 +1,133 @@
+{
+  "name": "@armemon-library/redux",
+  "version": "0.1.0",
+  "description": "Redux Toolkit plugin for armemon — store, optional AsyncStorage persistence, and starter slice templates.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "./dist/runtime/index.js",
+  "types": "./dist/runtime/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/runtime/index.d.mts",
+        "default": "./dist/runtime/index.mjs"
+      },
+      "require": {
+        "types": "./dist/runtime/index.d.ts",
+        "default": "./dist/runtime/index.js"
+      }
+    },
+    "./wizard": {
+      "types": "./dist/wizard/index.d.mts",
+      "import": "./dist/wizard/index.mjs"
+    },
+    "./package.json": "./package.json",
+    "./persist": {
+      "import": {
+        "types": "./dist/runtime/persistAdapter.d.mts",
+        "default": "./dist/runtime/persistAdapter.mjs"
+      },
+      "require": {
+        "types": "./dist/runtime/persistAdapter.d.ts",
+        "default": "./dist/runtime/persistAdapter.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "persist"
+  ],
+  "armemon": {
+    "manifestVersion": 1,
+    "pluginId": "redux",
+    "displayName": "Redux Toolkit",
+    "description": "State management with Redux Toolkit, optional AsyncStorage persistence, and starter slice templates.",
+    "category": "state-management",
+    "required": false,
+    "runtimeExportName": "ReduxPlugin",
+    "configExportName": "configureReduxPlugin",
+    "peerPackages": [
+      "@reduxjs/toolkit",
+      "react-redux"
+    ],
+    "settings": {
+      "file": "redux/store.config.ts",
+      "exportName": "reduxConfig"
+    }
+  },
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsup --config tsup.runtime.config.ts && tsup --config tsup.wizard.config.ts",
+    "dev": "tsup --config tsup.runtime.config.ts --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test --ext .ts,.tsx",
+    "test": "vitest run --config ../../vitest.config.ts packages/plugin-redux/test"
+  },
+  "dependencies": {
+    "@armemon-library/config-types": "^0.1.0"
+  },
+  "peerDependencies": {
+    "@reduxjs/toolkit": ">=2.0.0",
+    "react": ">=18.0.0",
+    "react-native": ">=0.70.0",
+    "react-redux": ">=9.0.0",
+    "redux-persist": ">=6.0.0",
+    "@react-native-async-storage/async-storage": ">=1.20.0",
+    "@armemon-library/cli-kit": ">=0.1.0 <1.0.0"
+  },
+  "devDependencies": {
+    "@armemon-library/cli-kit": "^0.1.0",
+    "@react-native-async-storage/async-storage": "^2.1.0",
+    "@reduxjs/toolkit": "^2.3.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.0",
+    "eslint": "^9.39.1",
+    "react": "^18.3.0",
+    "react-native": "^0.76.0",
+    "react-redux": "^9.1.2",
+    "redux-persist": "^6.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "peerDependenciesMeta": {
+    "redux-persist": {
+      "optional": true
+    },
+    "@react-native-async-storage/async-storage": {
+      "optional": true
+    },
+    "@armemon-library/cli-kit": {
+      "optional": true
+    }
+  },
+  "sideEffects": false,
+  "author": {
+    "name": "Ahmed Raza Memon",
+    "url": "https://github.com/armemon-dev"
+  },
+  "homepage": "https://github.com/armemon-dev/armemon-library#readme",
+  "bugs": {
+    "url": "https://github.com/armemon-dev/armemon-library/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/armemon-dev/armemon-library.git",
+    "directory": "packages/plugin-redux"
+  },
+  "keywords": [
+    "react-native",
+    "redux",
+    "redux-toolkit",
+    "armemon-plugin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

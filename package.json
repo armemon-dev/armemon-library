@@ -1,0 +1,49 @@
+{
+  "name": "armemon-library",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Monorepo for the armemon CLI — interactive React Native scaffolding, plugins, and runtime.",
+  "author": "Ahmed Raza Memon (armemon)",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "packageManager": "npm@10.9.8",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "docs:guide": "npm run build && node scripts/generate-user-guide.mjs",
+    "check:packages": "node scripts/check-packages.mjs",
+    "changeset": "changeset",
+    "release": "turbo run build lint typecheck test && npm run check:packages && changeset publish",
+    "lint:fix": "eslint packages --ext .ts,.tsx --fix",
+    "check": "turbo run build lint typecheck test",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@changesets/cli": "^2.29.7",
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.10.0",
+    "@types/react-test-renderer": "18.3.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "prettier": "^3.6.2",
+    "publint": "0.3.24",
+    "react-test-renderer": "18.3.1",
+    "tsup": "^8.3.0",
+    "turbo": "^2.6.1",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "type": "module"
+}
