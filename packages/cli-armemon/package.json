@@ -4,8 +4,8 @@
   "description": "Interactive scaffolding CLI for React Native apps — plugins, splash screen, and advanced init in one wizard.",
   "license": "MIT",
   "bin": {
-    "armemon": "./dist/bin/armemon.js",
-    "memon": "./dist/bin/armemon.js"
+    "armemon": "dist/bin/armemon.js",
+    "memon": "dist/bin/armemon.js"
   },
   "type": "module",
   "main": "./dist/index.js",
